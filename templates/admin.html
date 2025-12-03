@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Training Assistant{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Total Questions</h6>
+                            <h2 class="mb-0">{{ total_questions }}</h2>
+                        </div>
+                        <i class="bi bi-chat-dots fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Active Users</h6>
+                            <h2 class="mb-0">{{ active_users }}</h2>
+                        </div>
+                        <i class="bi bi-people fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Documents</h6>
+                            <h2 class="mb-0">{{ total_documents }}</h2>
+                        </div>
+                        <i class="bi bi-file-earmark-text fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Top Questions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Most Frequently Asked Questions</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_questions %}
+                    <div class="list-group list-group-flush">
+                        {% for q in top_questions %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-truncate" style="max-width: 80%;" title="{{ q.question_text }}">
+                                {{ q.question_text[:80] }}{% if q.question_text|length > 80 %}...{% endif %}
+                            </span>
+                            <span class="badge bg-primary rounded-pill">{{ q.count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4 mb-0">No questions asked yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Questions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Questions</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if recent_questions %}
+                    <div class="list-group list-group-flush">
+                        {% for q in recent_questions %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ q.user.first_name or q.user.email or 'User' }}</small>
+                                <small class="text-muted">{{ q.created_at.strftime('%b %d, %I:%M %p') }}</small>
+                            </div>
+                            <p class="mb-0 text-truncate" title="{{ q.message }}">{{ q.message }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4 mb-0">No questions yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Statistics -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-people me-2"></i>User Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Questions Asked</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in user_stats %}
+                        <tr>
+                            <td>{{ stat.first_name or 'N/A' }} {{ stat.last_name or '' }}</td>
+                            <td>{{ stat.email or 'N/A' }}</td>
+                            <td><span class="badge bg-secondary">{{ stat.question_count }}</span></td>
+                            <td>
+                                {% set u = users|selectattr('id', 'equalto', stat.id)|first %}
+                                {% if u and u.is_admin() %}
+                                <span class="badge bg-warning text-dark">Admin</span>
+                                {% else %}
+                                <span class="badge bg-info">Employee</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if stat.id != user.id %}
+                                <form action="{{ url_for('toggle_admin', user_id=stat.id) }}" method="POST" class="d-inline">
+                                    {% set u = users|selectattr('id', 'equalto', stat.id)|first %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        {% if u and u.is_admin() %}
+                                        Remove Admin
+                                        {% else %}
+                                        Make Admin
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted small">Current user</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Management -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Document Management</h5>
+            <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus me-1"></i>Upload New
+            </a>
+        </div>
+        <div class="card-body">
+            {% if documents %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Uploaded By</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td>
+                                <i class="bi bi-file-earmark-{% if doc.file_type == 'pdf' %}pdf text-danger{% elif doc.file_type == 'docx' %}word text-primary{% else %}text text-secondary{% endif %} me-2"></i>
+                                {{ doc.original_filename }}
+                            </td>
+                            <td><span class="badge bg-secondary">{{ doc.file_type|upper }}</span></td>
+                            <td>{{ (doc.file_size / 1024)|round(1) }} KB</td>
+                            <td>{{ doc.uploader.first_name or doc.uploader.email or 'Unknown' }}</td>
+                            <td>{{ doc.created_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <form action="{{ url_for('delete_document', doc_id=doc.id) }}" method="POST" 
+                                      onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4 mb-0">No documents uploaded yet</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
