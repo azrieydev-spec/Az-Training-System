@@ -53,6 +53,7 @@
             <div class="card">
                 <div class="card-body p-4">
                     <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="upload-zone" id="uploadZone">
                             <input type="file" name="file" id="fileInput" class="d-none" 
                                    accept=".pdf,.txt,.docx" required>

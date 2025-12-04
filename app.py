@@ -2,6 +2,7 @@ import os
 import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -27,6 +28,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # File upload configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# CSRF protection
+app.config['WTF_CSRF_TIME_LIMIT'] = None  # CSRF token doesn't expire with session
+csrf = CSRFProtect(app)
 
 # Initialize database
 db = SQLAlchemy(app, model_class=Base)
