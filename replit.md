@@ -1,7 +1,7 @@
 # Employee Training Chatbot
 
 ## Overview
-An AI-powered employee training chatbot web application that uses OpenAI GPT-3.5-turbo to answer training questions based on uploaded company documents.
+An AI-powered employee training chatbot web application that uses Groq API with Llama 3.1 70B to answer training questions based on uploaded company documents.
 
 ## Features
 - **Chat Interface**: Clean chat interface for employees to ask training questions
@@ -15,7 +15,7 @@ An AI-powered employee training chatbot web application that uses OpenAI GPT-3.5
 - **Backend**: Python Flask
 - **Database**: PostgreSQL (via Replit)
 - **Authentication**: Replit Auth (OAuth2)
-- **AI**: OpenAI GPT-3.5-turbo
+- **AI**: Groq API with Llama 3.1 70B Versatile
 - **Frontend**: Bootstrap 5, Vanilla JavaScript
 - **Document Processing**: pdfplumber (PDF), python-docx (DOCX)
 
@@ -26,7 +26,7 @@ An AI-powered employee training chatbot web application that uses OpenAI GPT-3.5
 ├── models.py           # SQLAlchemy database models
 ├── routes.py           # Route handlers and API endpoints
 ├── replit_auth.py      # Replit Auth integration
-├── ai_chat.py          # OpenAI integration for chat
+├── ai_chat.py          # Groq API integration for chat
 ├── document_processor.py # Document text extraction
 ├── templates/          # Jinja2 HTML templates
 │   ├── base.html
@@ -59,10 +59,11 @@ An AI-powered employee training chatbot web application that uses OpenAI GPT-3.5
 ## Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string (auto-configured)
 - `SESSION_SECRET` - Session encryption key (auto-configured)
-- `OPENAI_API_KEY` - Required for AI chat functionality
+- `GROQ_API_KEY` - Required for AI chat functionality
 
 ## Running the Application
 The application runs on port 5000 with Flask's development server.
 
 ## Recent Changes
+- December 2024: Switched from OpenAI to Groq API (Llama 3.1 70B)
 - December 2024: Initial implementation with all core features

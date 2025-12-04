@@ -4,17 +4,20 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-# the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-# do not change this unless explicitly requested by the user
-# User requested GPT-3.5-turbo specifically
-OPENAI_MODEL = "gpt-3.5-turbo"
+# Groq API configuration
+# Using llama-3.1-70b-versatile model via Groq API
+GROQ_MODEL = "llama-3.1-70b-versatile"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# Initialize OpenAI client
+# Initialize Groq client (using OpenAI SDK with Groq endpoint)
 client = None
-if OPENAI_API_KEY:
-    client = OpenAI(api_key=OPENAI_API_KEY)
+if GROQ_API_KEY:
+    client = OpenAI(
+        api_key=GROQ_API_KEY,
+        base_url=GROQ_BASE_URL
+    )
 
 
 def get_document_context(documents):
@@ -31,7 +34,7 @@ def get_document_context(documents):
 def generate_response(user_message, documents, chat_history=None):
     """Generate an AI response based on user message and document context."""
     if not client:
-        return "I'm sorry, but the AI service is not configured. Please contact an administrator to set up the OpenAI API key."
+        return "I'm sorry, but the AI service is not configured. Please contact an administrator to set up the Groq API key."
     
     try:
         # Build document context
@@ -71,9 +74,9 @@ before you can provide specific company information."""
         # Add current user message
         messages.append({"role": "user", "content": user_message})
         
-        # Generate response using GPT-3.5-turbo as requested by user
+        # Generate response using Groq API with llama-3.1-70b-versatile
         response = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=GROQ_MODEL,
             messages=messages,
             max_tokens=1000,
             temperature=0.7
