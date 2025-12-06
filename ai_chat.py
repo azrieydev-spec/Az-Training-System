@@ -4,19 +4,19 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-# Groq API configuration
-# Using llama-3.1-70b-versatile model via Groq API
-GROQ_MODEL = "llama-3.1-70b-versatile"
-GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+# DeepSeek API configuration
+# Using deepseek-chat model via DeepSeek API
+DEEPSEEK_MODEL = "deepseek-chat"
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
 
-# Initialize Groq client (using OpenAI SDK with Groq endpoint)
+# Initialize DeepSeek client (using OpenAI SDK with DeepSeek endpoint)
 client = None
-if GROQ_API_KEY:
+if DEEPSEEK_API_KEY:
     client = OpenAI(
-        api_key=GROQ_API_KEY,
-        base_url=GROQ_BASE_URL
+        api_key=DEEPSEEK_API_KEY,
+        base_url=DEEPSEEK_BASE_URL
     )
 
 
@@ -34,7 +34,7 @@ def get_document_context(documents):
 def generate_response(user_message, documents, chat_history=None):
     """Generate an AI response based on user message and document context."""
     if not client:
-        return "I'm sorry, but the AI service is not configured. Please contact an administrator to set up the Groq API key."
+        return "I'm sorry, but the AI service is not configured. Please contact an administrator to set up the DeepSeek API key."
     
     try:
         # Build document context
@@ -74,9 +74,9 @@ before you can provide specific company information."""
         # Add current user message
         messages.append({"role": "user", "content": user_message})
         
-        # Generate response using Groq API with llama-3.1-70b-versatile
+        # Generate response using DeepSeek API with deepseek-chat
         response = client.chat.completions.create(
-            model=GROQ_MODEL,
+            model=DEEPSEEK_MODEL,
             messages=messages,
             max_tokens=1000,
             temperature=0.7
