@@ -1,22 +1,22 @@
+
 import os
 import uuid
 from flask import render_template, request, redirect, url_for, jsonify, session, flash
-from flask_login import current_user
+from flask_login import current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 
 from app import app, db
-from replit_auth import require_login, require_admin, make_replit_blueprint
+from auth import require_login, require_admin
 from models import User, Document, ChatMessage, QuestionAnalytics
 from document_processor import extract_text, get_file_extension, is_allowed_file
 from ai_chat import generate_response, normalize_question
 
-# Register auth blueprint
-app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
 # Make session permanent
 @app.before_request
 def make_session_permanent():
     session.permanent = True
+
 
 # Add cache control headers
 @app.after_request
@@ -35,13 +35,98 @@ def index():
     return render_template('landing.html')
 
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration page."""
+    if current_user.is_authenticated:
+        return redirect(url_for('chat'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Validation
+        if not email or not password:
+            flash('Email and password are required.', 'error')
+            return redirect(url_for('register'))
+        
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'error')
+            return redirect(url_for('register'))
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(url_for('register'))
+        
+        # Check if user already exists
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered. Please log in.', 'error')
+            return redirect(url_for('login'))
+        
+        # Create new user
+        user = User(email=email)
+        user.set_password(password)
+        
+        # Set admin role for specific email
+        if email == 'azrieydev@gmail.com':
+            user.role = 'admin'
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('register.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login page."""
+    if current_user.is_authenticated:
+        return redirect(url_for('chat'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        
+        if not email or not password:
+            flash('Email and password are required.', 'error')
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if user and user.check_password(password):
+            login_user(user)
+            
+            # Redirect to next page or chat
+            next_page = request.args.get('next')
+            if next_page:
+                return redirect(next_page)
+            return redirect(url_for('chat'))
+        else:
+            flash('Invalid email or password.', 'error')
+            return redirect(url_for('login'))
+    
+    return render_template('login.html')
+
+
+@app.route('/logout')
+@require_login
+def logout():
+    """User logout."""
+    logout_user()
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('index'))
+
+
 @app.route('/chat')
 @require_login
 def chat():
     """Chat interface for employees."""
-    # Get user's chat history
     messages = ChatMessage.query.filter_by(user_id=current_user.id).order_by(ChatMessage.created_at.desc()).limit(50).all()
-    messages = list(reversed(messages))  # Show oldest first
+    messages = list(reversed(messages))
     return render_template('chat.html', messages=messages, user=current_user)
 
 
@@ -55,17 +140,12 @@ def api_chat():
     if not user_message:
         return jsonify({'error': 'Message is required'}), 400
     
-    # Get all documents for context
     documents = Document.query.all()
-    
-    # Get user's recent chat history
     chat_history = ChatMessage.query.filter_by(user_id=current_user.id).order_by(ChatMessage.created_at.desc()).limit(10).all()
     chat_history = list(reversed(chat_history))
     
-    # Generate AI response
     ai_response = generate_response(user_message, documents, chat_history)
     
-    # Save the message and response
     chat_msg = ChatMessage(
         user_id=current_user.id,
         message=user_message,
@@ -73,7 +153,6 @@ def api_chat():
     )
     db.session.add(chat_msg)
     
-    # Track question for analytics
     normalized = normalize_question(user_message)
     analytics = QuestionAnalytics.query.filter_by(normalized_question=normalized).first()
     if analytics:
@@ -120,7 +199,6 @@ def upload():
             flash('File type not allowed. Please upload PDF, TXT, or DOCX files.', 'error')
             return redirect(request.url)
         
-        # Secure the filename and create unique name
         original_filename = secure_filename(file.filename)
         file_ext = get_file_extension(original_filename)
         unique_filename = f"{uuid.uuid4().hex}.{file_ext}"
@@ -128,13 +206,9 @@ def upload():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(file_path)
         
-        # Get file size
         file_size = os.path.getsize(file_path)
-        
-        # Extract text from document
         content = extract_text(file_path, file_ext)
         
-        # Save to database
         doc = Document(
             filename=unique_filename,
             original_filename=original_filename,
@@ -158,7 +232,6 @@ def delete_document(doc_id):
     """Delete a document (admin only)."""
     doc = Document.query.get_or_404(doc_id)
     
-    # Delete file from filesystem
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], doc.filename)
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -174,28 +247,14 @@ def delete_document(doc_id):
 @require_admin
 def admin_dashboard():
     """Admin dashboard with analytics."""
-    # Total questions asked
     total_questions = ChatMessage.query.count()
-    
-    # Total unique users who asked questions
     active_users = db.session.query(ChatMessage.user_id).distinct().count()
-    
-    # Total documents
     total_documents = Document.query.count()
-    
-    # Most frequently asked questions
     top_questions = QuestionAnalytics.query.order_by(QuestionAnalytics.count.desc()).limit(10).all()
-    
-    # Recent questions
     recent_questions = ChatMessage.query.order_by(ChatMessage.created_at.desc()).limit(20).all()
-    
-    # All documents
     documents = Document.query.order_by(Document.created_at.desc()).all()
-    
-    # All users
     users = User.query.order_by(User.created_at.desc()).all()
     
-    # User statistics
     user_stats = db.session.query(
         User.id,
         User.first_name,
@@ -216,18 +275,16 @@ def admin_dashboard():
                          user_stats=user_stats)
 
 
-@app.route('/admin/users/<user_id>/toggle-admin', methods=['POST'])
+@app.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
 @require_admin
 def toggle_admin(user_id):
     """Toggle admin status for a user."""
     user = User.query.get_or_404(user_id)
     
-    # Prevent removing admin from yourself
     if user.id == current_user.id:
         flash('You cannot change your own admin status.', 'error')
         return redirect(url_for('admin_dashboard'))
     
-    # Prevent removing admin from azrieydev@gmail.com
     if user.email == 'azrieydev@gmail.com':
         flash('Cannot change admin status of the primary admin account.', 'error')
         return redirect(url_for('admin_dashboard'))
@@ -235,7 +292,7 @@ def toggle_admin(user_id):
     user.role = 'employee' if user.is_admin() else 'admin'
     db.session.commit()
     
-    flash(f'User {user.first_name or user.email} is now {"an admin" if user.is_admin() else "an employee"}.', 'success')
+    flash(f'User {user.email} is now {"an admin" if user.is_admin() else "an employee"}.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 
@@ -245,7 +302,6 @@ def users_management():
     """User management page for admins."""
     users = User.query.order_by(User.created_at.desc()).all()
     
-    # User statistics
     user_stats = db.session.query(
         User.id,
         User.first_name,

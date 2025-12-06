@@ -10,8 +10,11 @@
                 <h1 class="display-4 fw-bold mb-4">Employee Training Assistant</h1>
                 <p class="lead mb-4">Get instant answers to your training questions. Our AI-powered assistant uses company documents to provide accurate, helpful information.</p>
                 <div class="d-grid gap-2 d-md-flex">
-                    <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-lg px-4">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Get Started
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-2">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-person-plus me-2"></i>Register
                     </a>
                 </div>
             </div>

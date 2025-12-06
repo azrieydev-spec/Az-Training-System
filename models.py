@@ -1,43 +1,37 @@
+
 from datetime import datetime
 from app import db
-from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from flask_login import UserMixin
-from sqlalchemy import UniqueConstraint
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
-# (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.String, primary_key=True)
-    email = db.Column(db.String, unique=True, nullable=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email = db.Column(db.String, unique=True, nullable=False)
+    password_hash = db.Column(db.String, nullable=False)
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
-    profile_image_url = db.Column(db.String, nullable=True)
-    role = db.Column(db.String, default='employee', nullable=False)  # 'employee' or 'admin'
+    role = db.Column(db.String, default='employee', nullable=False)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     # Relationships
-    chat_messages = db.relationship('ChatMessage', backref='user', lazy=True)
+    chat_messages = db.relationship('ChatMessage', backref='user', lazy=True, cascade='all, delete-orphan')
+    uploaded_documents = db.relationship('Document', backref='uploader', lazy=True)
+    
+    def set_password(self, password):
+        """Hash and set password"""
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check if provided password matches hash"""
+        return check_password_hash(self.password_hash, password)
     
     def is_admin(self):
         """Check if user has admin role"""
         return self.role == 'admin'
-
-
-# (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-class OAuth(OAuthConsumerMixin, db.Model):
-    user_id = db.Column(db.String, db.ForeignKey(User.id))
-    browser_session_key = db.Column(db.String, nullable=False)
-    user = db.relationship(User)
-
-    __table_args__ = (UniqueConstraint(
-        'user_id',
-        'browser_session_key',
-        'provider',
-        name='uq_user_browser_session_key_provider',
-    ),)
 
 
 class Document(db.Model):
@@ -45,21 +39,19 @@ class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(255), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
-    file_type = db.Column(db.String(50), nullable=False)  # pdf, txt, docx
-    content = db.Column(db.Text, nullable=True)  # Extracted text content
+    file_type = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=True)
     file_size = db.Column(db.Integer, nullable=False)
-    uploaded_by = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    uploader = db.relationship('User', backref='uploaded_documents')
 
 
 class ChatMessage(db.Model):
     __tablename__ = 'chat_messages'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     message = db.Column(db.Text, nullable=False)
     response = db.Column(db.Text, nullable=True)
     
@@ -70,7 +62,7 @@ class QuestionAnalytics(db.Model):
     __tablename__ = 'question_analytics'
     id = db.Column(db.Integer, primary_key=True)
     question_text = db.Column(db.Text, nullable=False)
-    normalized_question = db.Column(db.String(500), nullable=False)  # Simplified version for grouping
+    normalized_question = db.Column(db.String(500), nullable=False)
     count = db.Column(db.Integer, default=1)
     
     created_at = db.Column(db.DateTime, default=datetime.now)

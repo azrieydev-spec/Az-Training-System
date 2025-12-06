@@ -30,8 +30,11 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
 # CSRF protection
-app.config['WTF_CSRF_TIME_LIMIT'] = None  # CSRF token doesn't expire with session
+app.config['WTF_CSRF_TIME_LIMIT'] = None
 csrf = CSRFProtect(app)
+
+# Session configuration
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
 # Initialize database
 db = SQLAlchemy(app, model_class=Base)
