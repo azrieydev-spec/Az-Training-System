@@ -11,19 +11,15 @@ def migrate_database():
     with app.app_context():
         print("Starting database migration...")
         
-        # Drop old OAuth table if it exists
-        try:
-            db.session.execute(db.text("DROP TABLE IF EXISTS o_auth CASCADE"))
-            db.session.commit()
-            print("✓ Dropped old OAuth table")
-        except Exception as e:
-            print(f"Note: {e}")
-            db.session.rollback()
+        # Drop all tables to start fresh
+        print("Dropping all existing tables...")
+        db.drop_all()
+        print("✓ All tables dropped")
         
         # Recreate all tables with new schema
-        db.drop_all()
+        print("Creating tables with new schema...")
         db.create_all()
-        print("✓ Recreated database tables")
+        print("✓ Database tables created with new schema")
         
         # Create default admin user
         admin_email = 'azrieydev@gmail.com'
@@ -31,7 +27,7 @@ def migrate_database():
         
         if not admin:
             admin = User(email=admin_email, role='admin')
-            admin.set_password('admin123')  # Change this password immediately after first login!
+            admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
             print(f"✓ Created admin user: {admin_email}")
@@ -40,11 +36,14 @@ def migrate_database():
         else:
             print(f"✓ Admin user already exists: {admin_email}")
         
-        print("\nMigration complete!")
+        print("\n" + "="*60)
+        print("Migration complete!")
+        print("="*60)
         print("\nNext steps:")
         print("1. Login with azrieydev@gmail.com / admin123")
         print("2. Change the admin password immediately")
         print("3. Users will need to register new accounts")
+        print("="*60)
 
 if __name__ == '__main__':
     migrate_database()
