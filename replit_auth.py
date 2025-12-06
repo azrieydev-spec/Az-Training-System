@@ -126,15 +126,27 @@ def make_replit_blueprint():
 
 def save_user(user_claims):
     user = User.query.get(user_claims['sub'])
+    email = user_claims.get('email')
+    
     if user is None:
         user = User()
         user.id = user_claims['sub']
-        user.role = 'employee'  # Default role for new users
+        
+        # Check if this is the first user or specific admin email
+        total_users = User.query.count()
+        if total_users == 0 or email == 'azrieydev@gmail.com':
+            user.role = 'admin'
+        else:
+            user.role = 'employee'
     
-    user.email = user_claims.get('email')
+    user.email = email
     user.first_name = user_claims.get('first_name')
     user.last_name = user_claims.get('last_name')
     user.profile_image_url = user_claims.get('profile_image_url')
+    
+    # Ensure azrieydev@gmail.com is always admin
+    if email == 'azrieydev@gmail.com':
+        user.role = 'admin'
     
     merged_user = db.session.merge(user)
     db.session.commit()

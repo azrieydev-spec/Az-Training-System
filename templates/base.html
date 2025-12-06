@@ -32,15 +32,20 @@
                             <i class="bi bi-file-earmark-text me-1"></i>Documents
                         </a>
                     </li>
+                    {% if current_user.is_admin() %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}" href="{{ url_for('upload') }}">
                             <i class="bi bi-cloud-upload me-1"></i>Upload
                         </a>
                     </li>
-                    {% if current_user.is_admin() %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-                            <i class="bi bi-speedometer2 me-1"></i>Admin
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'users_management' %}active{% endif %}" href="{{ url_for('users_management') }}">
+                            <i class="bi bi-people me-1"></i>User Management
                         </a>
                     </li>
                     {% endif %}

@@ -102,7 +102,7 @@ def documents():
 
 
 @app.route('/upload', methods=['GET', 'POST'])
-@require_login
+@require_admin
 def upload():
     """Document upload page."""
     if request.method == 'POST':
@@ -227,11 +227,36 @@ def toggle_admin(user_id):
         flash('You cannot change your own admin status.', 'error')
         return redirect(url_for('admin_dashboard'))
     
+    # Prevent removing admin from azrieydev@gmail.com
+    if user.email == 'azrieydev@gmail.com':
+        flash('Cannot change admin status of the primary admin account.', 'error')
+        return redirect(url_for('admin_dashboard'))
+    
     user.role = 'employee' if user.is_admin() else 'admin'
     db.session.commit()
     
     flash(f'User {user.first_name or user.email} is now {"an admin" if user.is_admin() else "an employee"}.', 'success')
     return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/users')
+@require_admin
+def users_management():
+    """User management page for admins."""
+    users = User.query.order_by(User.created_at.desc()).all()
+    
+    # User statistics
+    user_stats = db.session.query(
+        User.id,
+        User.first_name,
+        User.last_name,
+        User.email,
+        User.role,
+        User.created_at,
+        db.func.count(ChatMessage.id).label('question_count')
+    ).outerjoin(ChatMessage).group_by(User.id).order_by(User.created_at.desc()).all()
+    
+    return render_template('users.html', users=users, user_stats=user_stats, user=current_user)
 
 
 @app.route('/profile')

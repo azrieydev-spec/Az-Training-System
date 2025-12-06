@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
-    role = db.Column(db.String, default='employee')  # 'employee' or 'admin'
+    role = db.Column(db.String, default='employee', nullable=False)  # 'employee' or 'admin'
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     chat_messages = db.relationship('ChatMessage', backref='user', lazy=True)
     
     def is_admin(self):
+        """Check if user has admin role"""
         return self.role == 'admin'
 
 

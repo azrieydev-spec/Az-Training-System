@@ -1,0 +1,105 @@
+
+{% extends "base.html" %}
+
+{% block title %}User Management - Training Assistant{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-people me-2"></i>User Management</h2>
+    
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">All Users</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Questions Asked</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in user_stats %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                        {{ (stat.first_name or stat.email or 'U')[0]|upper }}
+                                    </div>
+                                    <span>{{ stat.first_name or 'N/A' }} {{ stat.last_name or '' }}</span>
+                                </div>
+                            </td>
+                            <td>{{ stat.email or 'N/A' }}</td>
+                            <td>
+                                {% if stat.role == 'admin' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-shield-check me-1"></i>Admin
+                                </span>
+                                {% else %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-person me-1"></i>Employee
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-secondary">{{ stat.question_count }}</span></td>
+                            <td>{{ stat.created_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                {% if stat.id != user.id and stat.email != 'azrieydev@gmail.com' %}
+                                <form action="{{ url_for('toggle_admin', user_id=stat.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        {% if stat.role == 'admin' %}
+                                        <i class="bi bi-arrow-down-circle me-1"></i>Demote to Employee
+                                        {% else %}
+                                        <i class="bi bi-arrow-up-circle me-1"></i>Promote to Admin
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                {% elif stat.email == 'azrieydev@gmail.com' %}
+                                <span class="badge bg-warning text-dark">Primary Admin</span>
+                                {% else %}
+                                <span class="text-muted small">Current user</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5><i class="bi bi-info-circle me-2"></i>Role Permissions</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-shield-check me-1"></i>Administrator</h6>
+                    <ul class="text-muted small">
+                        <li>Upload and delete documents</li>
+                        <li>View analytics dashboard</li>
+                        <li>Manage user roles</li>
+                        <li>Full access to all features</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-info"><i class="bi bi-person me-1"></i>Employee</h6>
+                    <ul class="text-muted small">
+                        <li>Chat with AI assistant</li>
+                        <li>View training documents (read-only)</li>
+                        <li>View personal profile</li>
+                        <li>Cannot upload or delete documents</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

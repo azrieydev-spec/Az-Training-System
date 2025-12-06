@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Profile - Training Assistant{% endblock %}
@@ -19,25 +20,49 @@
                     {% endif %}
                     
                     <h3>{{ user.first_name or '' }} {{ user.last_name or '' }}</h3>
-                    <p class="text-muted">{{ user.email or 'No email' }}</p>
+                    <p class="text-muted mb-2">{{ user.email or 'No email' }}</p>
                     
                     {% if user.is_admin() %}
-                    <span class="badge bg-warning text-dark mb-3">Administrator</span>
+                    <span class="badge bg-success fs-6 mb-3">
+                        <i class="bi bi-shield-check me-1"></i>Administrator
+                    </span>
                     {% else %}
-                    <span class="badge bg-info mb-3">Employee</span>
+                    <span class="badge bg-info fs-6 mb-3">
+                        <i class="bi bi-person me-1"></i>Employee
+                    </span>
                     {% endif %}
                 </div>
                 
                 <div class="card-body border-top">
                     <div class="row text-center">
-                        <div class="col">
+                        <div class="col-6">
                             <h4 class="mb-0">{{ message_count }}</h4>
                             <small class="text-muted">Questions Asked</small>
                         </div>
-                        <div class="col">
-                            <h4 class="mb-0">{{ user.created_at.strftime('%b %Y') }}</h4>
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ user.created_at.strftime('%b %d, %Y') }}</h4>
                             <small class="text-muted">Member Since</small>
                         </div>
+                    </div>
+                </div>
+                
+                <div class="card-body border-top">
+                    <div class="mb-3">
+                        <strong>Role:</strong>
+                        {% if user.is_admin() %}
+                        <span class="text-success">Administrator</span>
+                        <ul class="mt-2 small text-muted">
+                            <li>Can upload and delete documents</li>
+                            <li>Access to analytics dashboard</li>
+                            <li>Can manage user roles</li>
+                        </ul>
+                        {% else %}
+                        <span class="text-info">Employee</span>
+                        <ul class="mt-2 small text-muted">
+                            <li>Can chat with AI assistant</li>
+                            <li>Can view training documents</li>
+                        </ul>
+                        {% endif %}
                     </div>
                 </div>
                 
