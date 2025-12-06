@@ -11,9 +11,14 @@ def migrate_database():
     with app.app_context():
         print("Starting database migration...")
         
-        # Drop all tables to start fresh
+        # Drop all tables to start fresh (with CASCADE to handle dependencies)
         print("Dropping all existing tables...")
-        db.drop_all()
+        db.session.execute(db.text('DROP TABLE IF EXISTS flask_dance_oauth CASCADE'))
+        db.session.execute(db.text('DROP TABLE IF EXISTS users CASCADE'))
+        db.session.execute(db.text('DROP TABLE IF EXISTS documents CASCADE'))
+        db.session.execute(db.text('DROP TABLE IF EXISTS chat_messages CASCADE'))
+        db.session.execute(db.text('DROP TABLE IF EXISTS question_analytics CASCADE'))
+        db.session.commit()
         print("✓ All tables dropped")
         
         # Recreate all tables with new schema
