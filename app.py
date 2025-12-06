@@ -42,31 +42,8 @@ db = SQLAlchemy(app, model_class=Base)
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Create tables and initialize database
+# Create tables
 with app.app_context():
     import models  # noqa: F401
-    from models import User
-    
-    # Drop all existing tables
-    logging.info("Dropping all existing tables...")
-    db.drop_all()
-    
-    # Recreate all tables with correct schema
-    logging.info("Creating all tables with new schema...")
     db.create_all()
-    
-    # Create admin account
-    admin_email = 'azrieydev@gmail.com'
-    admin = User.query.filter_by(email=admin_email).first()
-    
-    if not admin:
-        logging.info(f"Creating admin user: {admin_email}")
-        admin = User(email=admin_email, role='admin')
-        admin.set_password('admin123')
-        db.session.add(admin)
-        db.session.commit()
-        logging.info(f"✓ Admin user created: {admin_email} / admin123")
-    else:
-        logging.info(f"Admin user already exists: {admin_email}")
-    
-    logging.info("Database initialization complete!")
+    logging.info("Database tables created")
